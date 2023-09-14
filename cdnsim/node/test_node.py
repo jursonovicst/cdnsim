@@ -1,9 +1,9 @@
 from unittest import TestCase
 
-from cdnsim.nodes import Node, LNode, TNode, XNode
+from cdnsim.node import Node, LNode, TNode, XNode
 
 
-class TestNodes(TestCase):
+class TestNode(TestCase):
     def setUp(self) -> None:
         Node.terminate_all()
 
@@ -19,16 +19,16 @@ class TestNodes(TestCase):
             def run(self) -> None:
                 pass
 
-        # initially, no registered nodes
+        # initially, no registered node
         self.assertListEqual([], SendNode.nodes())
 
-        # regsiter 2 nodes, should be unconnected
+        # regsiter 2 node, should be unconnected
         sender = SendNode('sender')
         receiver = RecvNode('receiver')
         self.assertListEqual([sender, receiver], SendNode.nodes())
         self.assertEqual(0, len(sender.remotes))
 
-        # connect nodes
+        # connect node
         sender.connect_to(receiver)
         self.assertListEqual([receiver], sender.remotes)
 

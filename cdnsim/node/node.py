@@ -7,7 +7,7 @@ class Node(Process, ABC):
     """
     General Node definition.
     """
-    # keep track of nodes
+    # keep track of node
     __nodes = []
 
     @classmethod
@@ -34,27 +34,27 @@ class Node(Process, ABC):
         """
         super().__init__(name=name)
 
-        # register nodes
+        # register node
         Node.__nodes.append(self)
 
     def terminate(self) -> None:
         super().terminate()
 
-        # deregister nodes
+        # deregister node
         if self in Node.__nodes:
             Node.__nodes.remove(self)
 
     @abstractmethod
     def run(self) -> None:
         """
-        Implement this to do work with the nodes.
+        Implement this to do work with the node.
         """
         pass
 
 
 class LNode(Node, ABC):
     """
-    Defines nodes with message input(s). LNodes possess the message queue.
+    Defines node with message input(s). LNodes possess the message queue.
     """
 
     def __init__(self, name: str):
@@ -63,7 +63,7 @@ class LNode(Node, ABC):
 
     def put(self, msg: Any, timeout: float = None) -> None:
         """
-        Send messae to this nodes.
+        Send messae to this node.
         :param msg:
         :param timeout:
         """
@@ -81,7 +81,7 @@ class LNode(Node, ABC):
 
 class TNode(Node, ABC):
     """
-    Defines nodes with message output(s).
+    Defines node with message output(s).
     """
 
     def __init__(self, name: str):
@@ -94,7 +94,7 @@ class TNode(Node, ABC):
 
     def connect_to(self, remote: LNode) -> None:
         """
-        Connect nodes to an other LNode. Connetion only works in message sending direction.
+        Connect node to an other LNode. Connetion only works in message sending direction.
         :param remote: remote LNode.
         :return:
         """
@@ -107,13 +107,13 @@ class TNode(Node, ABC):
 
 class XNode(LNode, TNode, ABC):
     """
-    Defines nodes with message input(s) and output(s)
+    Defines node with message input(s) and output(s)
     """
 
 
 class YNode(XNode, ABC):
     """
-    Defines nodes with input(s) but only one output.
+    Defines node with input(s) but only one output.
     """
 
     def connect_to(self, remote):
