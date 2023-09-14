@@ -8,40 +8,41 @@ class Node(Process, ABC):
     General Node definition.
     """
     # keep track of nodes
-    __nodes = {}
+    __nodes = []
 
     @classmethod
-    def nodes(cls) -> List[str]:
-        return list(cls.__nodes.keys())
+    def nodes(cls) -> List[Any]:
+        return cls.__nodes
 
     @classmethod
     def start_all(cls) -> None:
-        for node in cls.__nodes.values():
+        for node in cls.__nodes:
             node.start()
 
     @classmethod
     def terminate_all(cls) -> None:
         while Node.__nodes:
-            name, node = Node.__nodes.popitem()
+            node = Node.__nodes.pop()
             if node.is_alive():
                 node.terminate()
                 node.join(1)
 
-    def __init__(self, name: str):
-        if name in Node.__nodes:
-            raise KeyError(f"Node with name {name} already exists!")
+    def __init__(self, name: str | None):
+        """
 
+        :param name: just for convenience, no function.
+        """
         super().__init__(name=name)
 
         # register node
-        Node.__nodes[name] = self
+        Node.__nodes.append(self)
 
     def terminate(self) -> None:
         super().terminate()
 
         # deregister node
-        if self.name in Node.__nodes:
-            Node.__nodes.pop(self.name)
+        if self in Node.__nodes:
+            Node.__nodes.remove(self)
 
     @abstractmethod
     def run(self) -> None:
@@ -51,6 +52,33 @@ class Node(Process, ABC):
         pass
 
 
+class LNode(Node, ABC):
+    """
+    Defines node with message input(s). LNodes possess the message queue.
+    """
+
+    def __init__(self, name: str):
+        super().__init__(name=name)
+        self.__queue = Queue()
+
+    def put(self, msg: Any, timeout: float = None) -> None:
+        """
+        Send messae to this node.
+        :param msg:
+        :param timeout:
+        """
+        self.__queue.put(msg, timeout=timeout)
+
+    def _receive(self, timeout: float = None) -> Iterator[List[Any]]:
+        """
+        Iterator to process messages.
+        :param timeout:
+        :return:
+        """
+        while True:
+            yield self.__queue.get(timeout=timeout)
+
+
 class TNode(Node, ABC):
     """
     Defines node with message output(s).
@@ -58,79 +86,29 @@ class TNode(Node, ABC):
 
     def __init__(self, name: str):
         super().__init__(name=name)
-        self.__remote_queues = {}
+        self.__remotes = []
 
     @property
-    def remote_lnodes(self) -> List[str]:
-        return list(self.__remote_queues.keys())
+    def remotes(self) -> List[LNode]:
+        return self.__remotes
 
-    def connect_to(self, remote: Node):
+    def connect_to(self, remote: LNode) -> None:
+        """
+        Connect node to an other LNode. Connetion only works in message sending direction.
+        :param remote: remote LNode.
+        :return:
+        """
         if not isinstance(remote, LNode):
             raise ValueError(f"Cannot connect to {remote.__class__.__name__}")
-        if remote.name in self.__remote_queues:
+        if remote in self.__remotes:
             raise KeyError(f"Already connected to {remote.name}")
-        self.__remote_queues[remote.name] = remote.create_queue_for(self)
-
-    def register_queue_for(self, queue: Queue, lnode: Node):
-        assert isinstance(lnode, LNode), f"Are you sure? {type(lnode)}"
-        assert lnode.name not in self.__remote_queues, f"Queue already exist for {lnode.name}"
-        self.__remote_queues[lnode.name] = queue
-
-    def _sendto(self, msg: Any, node: Node, timeout: float = None) -> None:
-        if node.name not in self.__remote_queues:
-            raise KeyError(f"Not connected to node {node.name}")
-        self.__remote_queues[node.name].put(msg, timeout=timeout)
-
-
-class LNode(Node, ABC):
-    """
-    Defines node with message input(s).
-    """
-
-    def __init__(self, name: str):
-        super().__init__(name=name)
-        self.__queues = {}
-
-    @property
-    def remote_tnodes(self) -> List[str]:
-        return list(self.__queues.keys())
-
-    def connect_to(self, remote: Node):
-        if not isinstance(remote, TNode):
-            raise ValueError(f"{self.__class__.__name__} cannot connect to {remote.__class__.__name__}")
-        if remote.name in self.__queues:
-            raise KeyError(f"Already connected to {remote.name}")
-
-        remote.register_queue_for(self.create_queue_for(remote), self)
-
-    def create_queue_for(self, tnode: TNode) -> Queue:
-        assert isinstance(tnode, TNode), f"Are you sure? {type(tnode)}"
-        assert tnode.name not in self.__queues, f"Queue already exist for {tnode.name}"
-
-        self.__queues[tnode.name] = Queue()
-        return self.__queues[tnode.name]
-
-    def _receive(self, timeout: float = None) -> Iterator[List[Any]]:
-        while True:
-            yield [q.get(timeout=timeout) for q in self.__queues.values()]
+        self.__remotes.append(remote)
 
 
 class XNode(LNode, TNode, ABC):
     """
     Defines node with message input(s) and output(s)
     """
-
-    def connect_to(self, remote: Node):
-        """
-        Call connect only once.
-        :param remote:
-        :return:
-        """
-        if isinstance(remote, LNode):
-            TNode.connect_to(self, remote)
-
-        elif isinstance(remote, TNode):
-            LNode.connect_to(self, remote)
 
 
 class YNode(XNode, ABC):
@@ -139,15 +117,6 @@ class YNode(XNode, ABC):
     """
 
     def connect_to(self, remote):
-        assert len(self.remote_lnodes) == 0, f"{self.__class__.__name__} can connect only to one LNode!"
-        super().connect_to(remote)
-
-
-class ANode(XNode, ABC):
-    """
-    Defines node with only one input and output(s)
-    """
-
-    def connect_to(self, remote):
-        assert len(self.remote_tnodes) == 0, f"{self.__class__.__name__} can connect only to one TNode!"
+        if len(self.remotes) != 0:
+            raise SyntaxError(f"{self.__class__.__name__} can connect only to one LNode!")
         super().connect_to(remote)
