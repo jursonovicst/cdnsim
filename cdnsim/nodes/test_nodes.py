@@ -3,7 +3,7 @@ from unittest import TestCase
 from cdnsim.nodes import Node, LNode, TNode, XNode
 
 
-class TestNode(TestCase):
+class TestNodes(TestCase):
     def setUp(self) -> None:
         Node.terminate_all()
 
