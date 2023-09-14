@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from cdnsim.node import Node, LNode, TNode, XNode
+from cdnsim.nodes import Node, LNode, TNode, XNode
 
 
 class TestNode(TestCase):
