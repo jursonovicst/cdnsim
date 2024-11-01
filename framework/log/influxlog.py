@@ -1,9 +1,9 @@
 from influxdb import InfluxDBClient
 
-from cdnsim.log import LogMixIn
+from .log import LogMixIn
 
 
-class InfluxMixIn(LogMixIn):
+class InfluxlogMixIn(LogMixIn):
     def __init__(self, host='localhost', port=8086, username='root', password='root', database=None, **kwargs):
         super().__init__(**kwargs)
         self.__client = InfluxDBClient(host, port, username, password, database)

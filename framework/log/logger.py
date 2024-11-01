@@ -1,5 +1,4 @@
-from cdnsim.content import Obj
-from cdnsim.log import LogMixIn
+from .log import LogMixIn
 
 
 class LoggerMixIn(LogMixIn):
@@ -8,6 +7,3 @@ class LoggerMixIn(LogMixIn):
 
     def _info(self, buff: str) -> None:
         print(buff)
-
-    def _request(self, tick: int, obj: Obj) -> None:
-        print(f"{tick}: {str(obj)}")

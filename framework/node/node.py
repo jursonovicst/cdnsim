@@ -1,60 +1,77 @@
+import logging
 from abc import ABC, abstractmethod
 from multiprocessing import Process
 from multiprocessing import Queue as Queue
-from typing import List, Iterator, Any
+from typing import List, Any
 
-from cdnsim.log import LogMixIn
+from framework.log import LogMixIn
 
 
 class Node(Process, LogMixIn, ABC):
     """
-    General Node definition. Independent from any emulation, just provides a framework for general messaging amd
-    multiprocessing.
+    General Node definition. Provides a framework for general messaging amd multiprocessing.
     """
-    # keep track of node
+    # keep track of nodes
     __nodes = []
 
     @classmethod
     def start_all(cls) -> None:
+        """
+        Start the simulation
+        """
         for node in cls.__nodes:
-            print(f"Start {node.name}")
+            logging.info(f"Start {node.name}")
             node.start()
 
     @classmethod
     def terminate_all(cls) -> None:
+        """
+        Terminate the simulation
+        """
         while Node.__nodes:
             node = Node.__nodes.pop()
             if node.is_alive():
-                print(f"Terminate {node.name}")
+                logging.info(f"Terminate {node.name}")
                 node.terminate()
                 node.join(1)
 
     @classmethod
     def join_all(cls, timeout: float = None) -> None:
+        """
+        Join the simulation, wait until completes. This call blocks.
+        """
         for node in cls.__nodes:
             if node.is_alive():
-                print(f"Join {node.name}")
+                logging.info(f"Join {node.name}")
                 node.join(timeout)
 
+    @classmethod
+    def list_all(cls) -> list:
+        return cls.__nodes
+
     def __init__(self, **kwargs):
+        kwargs['target'] = self._run
         super().__init__(**kwargs)
         self._stats = {}
         Node.__nodes.append(self)
 
-    def run(self) -> None:
+    def _run(self) -> None:
+        """
+        Use the work method to implement your own tasks.
+        """
         self._info(f"{self.name} started")
         try:
             self.work()
         except KeyboardInterrupt:
             pass
         finally:
-            # deregister node
-            if self in self.__nodes:
-                self._info(f"{self.name} exited")
-                self.__nodes.remove(self)
+            self._info(f"{self.name} exited")
 
     @abstractmethod
     def work(self) -> None:
+        """
+        Overwrite this to implement your node.
+        """
         ...
 
 
@@ -78,18 +95,14 @@ class LNode(Node, ABC):
         self.__queues.append(queue)
         return queue
 
-    def _receive(self) -> Iterator[List[Any]]:
+    def _receive(self) -> List[Any]:
         """
         Iterator to process messages.
         :param timeout:
         :return:
         """
-        while True:
-            try:
-                yield [msg for q in self.__queues for msg in q.get()]
-                self.__tick += 1
-            except KeyboardInterrupt:
-                break
+        self.__tick += 1
+        return [q.get() for q in self.__queues]
 
 
 class TNode(Node, ABC):
@@ -107,7 +120,7 @@ class TNode(Node, ABC):
 
     def connect_to(self, remote: LNode) -> None:
         """
-        Connect node to another LNode. Connetion only works in message sending direction.
+        Connect node to another LNode. Connection only works in message sending direction.
         :param remote: remote LNode.
         :return:
         """
@@ -132,12 +145,12 @@ class XNode(LNode, TNode, ABC):
     """
 
 
-class YNode(XNode, ABC):
+class YNode(TNode, LNode, ABC):
     """
     Defines node with input(s) but only one output.
     """
 
     def connect_to(self, remote: LNode) -> None:
-        if len(self.__rqueues) != 0:
+        if len(self.remotes) != 0:
             raise SyntaxError(f"{self.__class__.__name__} can connect only to one LNode!")
         super().connect_to(remote)
