@@ -35,7 +35,7 @@ class Requests:
         return Requests(self._freq / other if self._freq is not None else None)
 
 
-class RequestMixIn(LNode):  # TODO: add here an inheritance from LNode
+class RequestMixIn(LNode):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
