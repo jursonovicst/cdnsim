@@ -1,4 +1,3 @@
-from .dummy import DummylogMixIn
-from .influxlog import InfluxlogMixIn
 from .log import LogMixIn
+from .dummy import DummylogMixIn
 from .logger import LoggerMixIn

@@ -1,9 +1,9 @@
-from .log import LogMixIn
+from framework.log import LogMixIn
 
 
 class DummylogMixIn(LogMixIn):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def _info(self, buff: str) -> None:
+    def log(self, buff: str, severity: str = LogMixIn.INFO) -> None:
         pass

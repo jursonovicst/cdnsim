@@ -1,5 +1,5 @@
 import logging
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, ABCMeta
 from multiprocessing import Process
 from multiprocessing import Queue as Queue
 from typing import List, Any
@@ -7,7 +7,7 @@ from typing import List, Any
 from framework.log import LogMixIn
 
 
-class Node(Process, LogMixIn, ABC):
+class Node(Process, LogMixIn, metaclass=ABCMeta):
     """
     General Node definition. Provides a framework for general messaging amd multiprocessing.
     """

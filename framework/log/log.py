@@ -1,7 +1,7 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod, ABCMeta
 
 
-class LogMixIn(ABC):
+class LogMixIn(metaclass=ABCMeta):
     INFO = 'INFO'
 
     @abstractmethod

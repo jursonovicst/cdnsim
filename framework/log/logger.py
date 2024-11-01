@@ -1,10 +1,7 @@
-from abc import ABC
-
-from framework.node import Node
-from .log import LogMixIn
+from framework.log import LogMixIn
 
 
-class LoggerMixIn(Node, LogMixIn, ABC):
+class LoggerMixIn(LogMixIn):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
