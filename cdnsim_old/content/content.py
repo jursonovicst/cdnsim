@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from cdnsim.content import Obj
+from cdnsim_old.content import Obj
 
 
 class ContentMixIn(ABC):

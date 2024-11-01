@@ -1,12 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Iterator
 
+class Arrival(ABC):
+    def __iter__(self):
+        return self
 
-class ArrivalMixIn(ABC):
     @abstractmethod
-    def _arrival(self) -> Iterator[int]:
-        """
-        Implement it to draw non-negative integers.
-        :return: iterator of integers.
-        """
+    def __next__(self) -> int:
         ...

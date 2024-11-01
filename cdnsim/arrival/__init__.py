@@ -1,3 +1,2 @@
-from .arrival import ArrivalMixIn
-from .poisson import PoissonMixIn
-from .constant import ConstantMixIn
+from .arrival import Arrival
+from .poisson import Poisson

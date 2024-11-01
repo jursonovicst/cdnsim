@@ -1,7 +1,7 @@
 import numpy as np
 
-from cdnsim.content import ContentMixIn
-from cdnsim.content import Obj
+from cdnsim_old.content import ContentMixIn
+from cdnsim_old.content import Obj
 
 
 class ZipfMixIn(ContentMixIn):

@@ -1,35 +1,18 @@
-from cdnsim.arrival import PoissonMixIn
-from cdnsim.content import ZipfMixIn, Obj
-from cdnsim.log import LoggerMixIn
-from cdnsim.node import LNode, TNode
-
-
-class Client(PoissonMixIn, ZipfMixIn, LoggerMixIn, TNode):
-
-    def work(self) -> None:
-        for size in self._arrival():
-            self._send(self.remotes[0], self._content(size))
-
-
-class Origin(LoggerMixIn, LNode):
-
-    def work(self) -> None:
-        for msg in self._receive():
-            for obj in msg:
-                self._request(self.tick, obj)
-
+from cdnsim import Client, Origin
+from cdnsim.arrival import Poisson
+from cdnsim.requests import Zipf
+from cdnsim.cache import PLFUCache
 
 if __name__ == "__main__":
-    try:
-        client = Client(name="client1", lam=1, alpha=1.2, content_base=[Obj(i) for i in range(1000)])
-        origin = Origin(name="origin1")
-        client.connect_to(origin)
 
-        client.start_all()
-        client.join_all()
-    except KeyboardInterrupt:
-        pass
-    except Exception as e:
-        print(e)
-    finally:
-        Client.terminate_all()
+    client1 = Client(arrival=Poisson(lam=100), requests=Zipf(cbase=10, a=1.1))
+    client2 = Client(arrival=Poisson(lam=100), requests=Zipf(cbase=10, a=1.1))
+#    cache = LFUCache()
+    origin = Origin()
+
+    client1.connect_to(origin)
+    client2.connect_to(origin)
+#    cache.connect_to(origin)
+
+    client1.start_all()
+

@@ -1,6 +1,6 @@
 import numpy as np
 
-from cdnsim.arrival import ArrivalMixIn
+from cdnsim_old.arrival import ArrivalMixIn
 
 
 class ConstantMixIn(ArrivalMixIn):

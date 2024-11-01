@@ -1,7 +1,7 @@
-from cdnsim.arrival import PoissonMixIn
-from cdnsim.content import ZipfMixIn, Obj
-from cdnsim.log import LoggerMixIn
-from cdnsim.node import LNode, TNode, XNode
+from cdnsim_old.arrival import PoissonMixIn
+from cdnsim_old.content import ZipfMixIn, Obj
+from framework.log import LoggerMixIn
+from framework.node import LNode, TNode, XNode
 
 
 class Client(PoissonMixIn, ZipfMixIn, LoggerMixIn, TNode):
