@@ -4,7 +4,7 @@ from framework.log import LoggerMixIn
 from framework.node import TNode
 
 
-class Client(TNode, LoggerMixIn):
+class Client(LoggerMixIn, TNode):
     def __init__(self, arrival: Arrival, requests: Requests, **kwargs):
         super().__init__(**kwargs)
         self._arrival = arrival

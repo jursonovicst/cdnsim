@@ -1,6 +1,10 @@
 from abc import abstractmethod
-from typing import Self
+from typing import Self, cast
+
 import pandas as pd
+
+from framework.node import LNode
+
 
 class Requests:
     def __init__(self, freq: pd.Series | None):
@@ -10,7 +14,11 @@ class Requests:
     def generate(self, k: int) -> Self:
         ...
 
-    def __radd__(self, other):
+    @property
+    def nrequests(self) -> int:
+        return self._freq.sum() if self._freq is not None else 0
+
+    def __radd__(self, other) -> Self:
         if other == 0:
             return self
         else:
@@ -22,6 +30,23 @@ class Requests:
     def __str__(self):
         return str(self._freq)
 
-    def __truediv__(self, other: int):
+    def __truediv__(self, other: int) -> Self:
         assert isinstance(other, int), type(other)
         return Requests(self._freq / other if self._freq is not None else None)
+
+
+class RequestMixIn(LNode):  # TODO: add here an inheritance from LNode
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self._rpt = pd.Series()
+
+    def work(self) -> None:
+        while True:
+            r = cast(Requests, sum(self._receive()))
+            self._rpt[self.tick] = r.nrequests
+            self.process_requests(r)
+
+    @abstractmethod
+    def process_requests(self, requests: Requests) -> None:
+        ...

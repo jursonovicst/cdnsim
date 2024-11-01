@@ -1,5 +1,7 @@
-from .arrival import Arrival
 import numpy as np
+
+from .arrival import Arrival
+
 
 class Poisson(Arrival):
     def __init__(self, lam: float, **kwargs):
@@ -10,4 +12,4 @@ class Poisson(Arrival):
         self.__rng = np.random.default_rng()
 
     def __next__(self) -> int:
-        return self.__rng.poisson(self.__lam, 1)[0]
+        return int(self.__rng.poisson(self.__lam, 1)[0])

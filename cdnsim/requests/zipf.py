@@ -1,6 +1,8 @@
 from typing import Self
-from scipy.stats import zipfian
+
 import pandas as pd
+from scipy.stats import zipfian
+
 from .requests import Requests
 
 
@@ -10,5 +12,5 @@ class Zipf(Requests):
         self._cbase = cbase
         self._a = a
 
-    def generate(self, k:int) -> Self:
+    def generate(self, k: int) -> Self:
         return Requests(pd.Series(zipfian.rvs(self._a, self._cbase, size=k)).value_counts())

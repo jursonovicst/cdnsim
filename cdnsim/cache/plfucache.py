@@ -1,4 +1,5 @@
 from .cache import Cache
+from ..requests import Requests
 
 
 class PLFUCache(Cache):
@@ -6,5 +7,6 @@ class PLFUCache(Cache):
         super().__init__(**kwargs)
         self._size = size
 
-    def work(self) -> None:
-        pass
+    def process_requests(self, requests: Requests) -> None:
+        self.log(f"{self._rpt.iloc[-1]}rps")
+        raise NotImplementedError("TODO: implement")
