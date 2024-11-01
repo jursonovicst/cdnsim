@@ -59,13 +59,13 @@ class Node(Process, LogMixIn, ABC):
         """
         Use the work method to implement your own tasks.
         """
-        self._info(f"{self.name} started")
+        self.log(f"{self.name} started")
         try:
             self.work()
         except KeyboardInterrupt:
             pass
         finally:
-            self._info(f"{self.name} exited")
+            self.log(f"{self.name} exited")
 
     @abstractmethod
     def work(self) -> None:
@@ -154,3 +154,7 @@ class YNode(TNode, LNode, ABC):
         if len(self.remotes) != 0:
             raise SyntaxError(f"{self.__class__.__name__} can connect only to one LNode!")
         super().connect_to(remote)
+
+    @property
+    def remote(self) -> LNode | None:
+        return None if not self.remotes else self.remotes[0]
