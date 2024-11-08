@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from framework.node import Node
+from nodes.node import Node
 
 
 class TKMixIn(tk.Label, Node):

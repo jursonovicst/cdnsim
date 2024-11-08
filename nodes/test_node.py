@@ -2,13 +2,13 @@ import time
 from pathlib import Path
 from unittest import TestCase
 
-from framework.log import DummylogMixIn
-from framework.node import Node, LNode, TNode, XNode, YNode
+from nodes.log import DummylogMixIn
+from nodes.node import Node, LNode, TNode, XNode, YNode
 
 
 class MyNode(Node, DummylogMixIn):
-    def work(self) -> None:
-        Path('out/test.txt').touch()
+    def _work(self) -> None:
+        Path('_out/test.txt').touch()
 
 
 class TestNode(TestCase):
@@ -26,11 +26,11 @@ class TestNode(TestCase):
         self.assertTrue(Node.list_all()[0].name.startswith("MyNode-"))
 
         # check work function
-        Path('out/test.txt').unlink(missing_ok=True)
+        Path('_out/test.txt').unlink(missing_ok=True)
         MyNode.start_all()
         MyNode.join_all()
         self.assertEqual(1, len(Node.list_all()), "tpm")
-        self.assertTrue(Path('out/test.txt').exists())
+        self.assertTrue(Path('_out/test.txt').exists())
 
         MyNode.terminate_all()
         self.assertEqual(0, len(Node.list_all()), "tpm")
@@ -40,11 +40,11 @@ class TestNode(TestCase):
 
     def test_LTNode(self):
         class RecvNode(LNode, DummylogMixIn):
-            def work(self) -> None:
+            def _work(self) -> None:
                 pass
 
         class SendNode(TNode, DummylogMixIn):
-            def work(self) -> None:
+            def _work(self) -> None:
                 pass
 
         # initially, no registered node
@@ -67,7 +67,7 @@ class TestNode(TestCase):
         sender._send(receiver.name, "tom")
         time.sleep(1)
         self.assertListEqual(["tom"], receiver._receive())
-        self.assertEqual(1, receiver.tick)
+        self.assertEqual(1, receiver._nreceived)
 
         # send multiple
         sender2 = SendNode(name='sender2')
@@ -75,19 +75,19 @@ class TestNode(TestCase):
         sender._send(receiver.name, 'tom1')
         sender2._send(receiver.name, 'tom2')
         self.assertListEqual(['tom1', 'tom2'], receiver._receive())
-        self.assertEqual(2, receiver.tick)
+        self.assertEqual(2, receiver._nreceived)
 
     def test_XNode(self):
         class SendNode(TNode, DummylogMixIn):
-            def work(self) -> None:
+            def _work(self) -> None:
                 pass
 
         class MiddleNode(XNode, DummylogMixIn):
-            def work(self) -> None:
+            def _work(self) -> None:
                 pass
 
         class RecvNode(LNode, DummylogMixIn):
-            def work(self) -> None:
+            def _work(self) -> None:
                 pass
 
         sender1 = SendNode(name='sender1')
@@ -117,15 +117,15 @@ class TestNode(TestCase):
 
     def test_YNode(self):
         class SendNode(TNode, DummylogMixIn):
-            def work(self) -> None:
+            def _work(self) -> None:
                 pass
 
         class MiddleNode(YNode, DummylogMixIn):
-            def work(self) -> None:
+            def _work(self) -> None:
                 pass
 
         class RecvNode(LNode, DummylogMixIn):
-            def work(self) -> None:
+            def _work(self) -> None:
                 pass
 
         sender1 = SendNode(name='sender1')
