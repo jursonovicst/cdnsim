@@ -3,11 +3,19 @@ from typing import Self
 import pandas as pd
 from scipy.stats import zipfian
 
-from .requests import Requests
+from cdnsim.requests.requests import Requests
 
 
 class Zipf(Requests):
+    """
+    Implements a Zipf distribution based request profile.
+    """
+
     def __init__(self, cbase: int, a: float):
+        """
+        :param cbase: number of content
+        :param a: zipf distribution parameter
+        """
         super().__init__(None)
         self._cbase = cbase
         self._a = a

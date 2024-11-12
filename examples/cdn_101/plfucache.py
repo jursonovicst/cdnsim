@@ -1,5 +1,5 @@
-from .cache import Cache
-from ..requests import Requests
+from cdnsim.cache.cache import Cache
+from cdnsim.requests import Requests
 
 
 class PLFUCache(Cache):
@@ -8,5 +8,5 @@ class PLFUCache(Cache):
         self._size = size
 
     def process_requests(self, requests: Requests) -> None:
-        self.log(f"{self._rpt.iloc[-1]}rps")
+        self._log(f"{self._rpt.iloc[-1]}rps")
         raise NotImplementedError("TODO: implement")

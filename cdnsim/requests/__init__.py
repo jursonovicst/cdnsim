@@ -1,2 +1,1 @@
-from .requests import Requests, RequestMixIn
-from .zipf import Zipf
+from .requests import Requests, IngressMixIn

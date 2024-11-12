@@ -1,6 +1,6 @@
 import numpy as np
 
-from .arrival import Arrival
+from cdnsim.arrival import Arrival
 
 
 class Poisson(Arrival):

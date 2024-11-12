@@ -1,7 +1,7 @@
 from cdnsim.arrival import Arrival
 from cdnsim.requests import Requests
-from framework.log import LoggerMixIn
-from framework.node import TNode
+from nodes.log import LoggerMixIn
+from nodes.node import TNode
 
 
 class Client(LoggerMixIn, TNode):
@@ -10,7 +10,7 @@ class Client(LoggerMixIn, TNode):
         self._arrival = arrival
         self._requests = requests
 
-    def work(self) -> None:
+    def _work(self) -> None:
         for k in self._arrival:  # <-- number of client requests
             for remote in self.remotes:  # <-- upstream nodes
                 self._send(remote, self._requests.generate(k) / len(self.remotes))  # <-- evenly distributed among nodes

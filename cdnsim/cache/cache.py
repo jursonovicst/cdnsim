@@ -1,9 +1,9 @@
 from abc import ABC
 
-from cdnsim.requests import RequestMixIn
-from framework.log import LoggerMixIn
-from framework.node import XNode
+from cdnsim.requests import IngressMixIn
+from nodes.log import LoggerMixIn
+from nodes.node import XNode
 
 
-class Cache(LoggerMixIn, RequestMixIn, XNode, ABC):
+class Cache(LoggerMixIn, IngressMixIn, XNode, ABC):
     ...
