@@ -1,12 +1,15 @@
-from cdnsim import Client, Origin
 from constant import Constant
+from nodes.log import LogMixIn, LoggerMixIn
 from noncache import NonCache
+from origin import Origin
 from uniform import Uniform
 
+LoggerMixIn.setlevel(LogMixIn.INFO)
 
 if __name__ == "__main__":
+
     # create the nodes
-    client = Client(arrival=Constant(rate=50, ticks=5), requests=Uniform(cbase=20))
+    client = Uniform(cbase=20, arrival=Constant(rate=50, ticks=5))
     cache = NonCache()
     origin = Origin()
 

@@ -1,1 +1,1 @@
-from .requests import Requests, IngressMixIn
+from .requests import Requests

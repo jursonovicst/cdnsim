@@ -1,31 +1,47 @@
+from typing import Self, Hashable, List
 from unittest import TestCase
-
-import pandas as pd
 
 from cdnsim.requests import Requests
 
 
 class TestRequests(TestCase):
     def test_init(self):
-        r = Requests(pd.Series([100, 200, 300],
-                               index=pd.MultiIndex.from_arrays([[1, 2, 3], [10, 20, 30]], names=('content', 'size'))))
+        # init
+        r1 = Requests(freqs=[100, 200, 300], index={'content': [1, 2, 3]})
+        r2 = Requests(freqs=[100, 200, 300], index={'content': [1, 2, 3], 'dummy': [22, 33, 44]})
 
-        self.assertEqual(600, r.nrequests)
-        self.assertEqual(14000, r.bytes)
+        # properties
+        self.assertEqual(600, r1.nrequests)
+        self.assertListEqual(['content'], r1.index.names)
+        self.assertEqual(600, r2.nrequests)
+        self.assertListEqual(['content', 'dummy'], r2.index.names)
+        # self.assertEqual(14000, r.pmf, r.pmf)
 
-        s = r + Requests(pd.Series([1, 2, 3], name='name_ignored',
-                                   index=pd.MultiIndex.from_arrays([[3, 4, 5], [30, 40, 50]],
-                                                                   names=('content', 'size'))))
+        # addition
+        s = r1 + Requests(freqs=[1, 2, 3], index={'content': [3, 4, 5]})
 
-        self.assertListEqual([100, 200, 301, 2, 3], list(s._freq.values))
-        self.assertListEqual([1, 2, 3, 4, 5], list(s._freq.index.levels[0]))
-        self.assertListEqual([10, 20, 30, 40, 50], list(s._freq.index.levels[1]))
+        self.assertListEqual([100, 200, 301, 2, 3], list(s.values))
+        self.assertListEqual(['content'], s.index.names)
+        self.assertListEqual([1, 2, 3, 4, 5], list(s.index.levels[0]))
 
-        r = Requests(pd.Series([10, 2, 6],
-                               index=pd.MultiIndex.from_arrays([[1, 2, 3], [10, 20, 30]], names=('content', 'size'))))
-        d = r / 3
+        # division
+        r = Requests(freqs=[10, 2, 6], index={'content': [1, 2, 3]})
+        d = r // 3
 
+        self.assertIsInstance(d, list)
+        self.assertTrue(all([isinstance(i, Requests) for i in d]), [type(i) for i in d])
         self.assertEqual(3, len(d))
-        self.assertListEqual([3, 0, 2], list(d[0]._freq.values))
-        self.assertListEqual([4, 1, 2], list(d[1]._freq.values))
-        self.assertListEqual([3, 1, 2], list(d[2]._freq.values))
+        self.assertEqual(r.sum(), sum(map(sum, d)))
+        self.assertListEqual([3, 0, 2], list(d[0]))
+        self.assertListEqual([4, 1, 2], list(d[1]))
+        self.assertListEqual([3, 1, 2], list(d[2]))
+
+    def test_custom(self):
+        class MyRequests(Requests):
+            @classmethod
+            def generate(cls, k: int) -> Self:
+                return cls([k], {'content': ['c']})
+
+        myrequests = MyRequests.generate(10)
+        self.assertIsInstance(myrequests, Requests)
+        self.assertEqual(10, myrequests.sum())

@@ -1,16 +1,18 @@
-from cdnsim.arrival import Arrival
+from abc import ABC, abstractmethod
+
 from cdnsim.requests import Requests
 from nodes.log import LoggerMixIn
 from nodes.node import TNode
+from typing import Iterator, List, Tuple
 
+class Client(LoggerMixIn, TNode, ABC):
 
-class Client(LoggerMixIn, TNode):
-    def __init__(self, arrival: Arrival, requests: Requests, **kwargs):
-        super().__init__(**kwargs)
-        self._arrival = arrival
-        self._requests = requests
+    def _work(self, *args) -> None:
+        for requests in self._generate():
+            for remote, request in requests:
+                self._send(remote, request)  # <-- evenly distributed among nodes
+        self._terminate()
 
-    def _work(self) -> None:
-        for k in self._arrival:  # <-- number of client requests
-            for remote in self.remotes:  # <-- upstream nodes
-                self._send(remote, self._requests.generate(k) / len(self.remotes))  # <-- evenly distributed among nodes
+    @abstractmethod
+    def _generate(self) -> Iterator[List[Tuple[str, Requests]]]:
+        ...

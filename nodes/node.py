@@ -56,10 +56,10 @@ class Node(Process, LogMixIn, metaclass=ABCMeta):
         return cls.__nodes
 
     def __init__(self, **kwargs):
-        # Make class's run method provate. Developers should use the work method to implement custom tasks.
-        kwargs['target'] = self._run
+        # Make class' run method private. Developers should use the _work method to implement custom tasks.
+        kwargs.pop('target', None)
 
-        super().__init__(**kwargs)
+        super().__init__(target=self._run, **kwargs)
         self._stats = {}
 
         # register node
@@ -97,7 +97,7 @@ class Node(Process, LogMixIn, metaclass=ABCMeta):
 
 class LNode(Node, ABC):
     """
-    Provides inter-node messaging by implementing a message input via multiprocessing.Queue.
+    Provides internode messaging by implementing a message input via multiprocessing.Queue.
 
     Letter L: assuming a top-down message flow, messages can enter via the vertical line of 'L', but output is blocked
     by the horizontal line.
@@ -109,41 +109,42 @@ class LNode(Node, ABC):
         """
         self.__queues = []  # queues for message inputs
         self.__qsize = qsize
-        self._nreceived = 0  # counter of processed messages
         super().__init__(**kwargs)
 
-    #    @property
-    #    def tick(self) -> int:
-    #        return self._nreceived
-
     def registerqueue(self) -> Queue:
+        """
+        Used by T-nodes to connecting this node. Creates the input queue.
+        """
         queue = Queue(self.__qsize)
         self.__queues.append(queue)
         return queue
 
     def _receive(self) -> List[Any]:
         """
-        Iterator to process messages. It will wait till one message is received in all input queues.
+        Receives messages from all inputs. It will wait till one message is received from all input queues.
 
         :return: the next messages from the message queues
         """
         # collect messages
         msgs = []
         for queue in self.__queues:
-            # get message from the ith queue, remove queue is termination (None) message received
+            # get message from the ith queue, remove queue if termination (None) message received
             if (msg := queue.get()) is None:
                 queue.close()
                 self.__queues.remove(queue)
             else:
                 msgs.append(msg)
 
-        self._nreceived += 1  # update received no.
+        # propagate termination
+        if not msgs and isinstance(self, TNode):
+            self._terminate()
+
         return msgs
 
 
 class TNode(Node, ABC):
     """
-    Provides inter-node messaging by implementing a message output.
+    Provides internode messaging by implementing a message output.
 
     Letter T: assuming a top-down message flow, messages can exit via the vertical line of 'T', but input is blocked by
     the horizontal line.
@@ -176,12 +177,15 @@ class TNode(Node, ABC):
         self.__rqueues[remote.name] = remote.registerqueue()
 
     def _terminate(self) -> None:
+        """
+        Sends the termination message (None) down the chain
+        """
         for rqueue in self.__rqueues.values():
             rqueue.put(None)
 
     def _send(self, to: str, msg: Any) -> None:
         if msg is None:
-            raise ValueError("Cannot send None message, None is used to signal termination.")
+            raise ValueError("Cannot send None message, None is reserved for termination.")
         try:
             self.__rqueues[to].put(msg)
         except KeyError as e:
@@ -192,13 +196,13 @@ class TNode(Node, ABC):
 
 class XNode(LNode, TNode, ABC):
     """
-    Provides inter-node messaging by implementing inputs and outputs.
+    Provides internode messaging by implementing inputs and outputs.
     """
 
 
 class YNode(TNode, LNode, ABC):
     """
-    Provides inter-node messaging by implementing inputs and a single output.
+    Provides internode messaging by implementing inputs and a single output.
     """
 
     def connect_to(self, remote: LNode) -> None:
