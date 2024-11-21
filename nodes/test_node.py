@@ -1,4 +1,4 @@
-import time
+import multiprocessing as mp
 from pathlib import Path
 from unittest import TestCase
 
@@ -9,6 +9,38 @@ from nodes.node import Node, LNode, TNode, XNode, YNode
 class MyNode(Node, DummylogMixIn):
     def _work(self) -> None:
         Path('_out/test.txt').touch()
+
+
+class MyTNode(TNode, DummylogMixIn):
+    """
+    Sends one *msg* message, then terminates
+    """
+
+    def __init__(self, msg: str, **kwargs):
+        super().__init__(**kwargs, args=(msg,))
+
+    def _work(self, msg) -> None:
+        for to in self.remotes:
+            self._send(to, msg)
+        self._terminate()
+
+
+class MyLNode(LNode, DummylogMixIn):
+    """
+    Receives messages.
+    """
+
+    def __init__(self, **kwargs):
+        self._array = mp.Array('c', 256)
+
+        super().__init__(**kwargs, args=(self._array,))
+
+    def _work(self, array) -> None:
+        while msgs := self._receive():
+            array.value = ','.join([msg for msg in msgs]).encode('ASCII')
+
+    def getmsgs(self) -> str:
+        return self._array.value.decode('ASCII')
 
 
 class TestNode(TestCase):
@@ -39,43 +71,44 @@ class TestNode(TestCase):
         self.assertEqual("tom", node2.name)
 
     def test_LTNode(self):
-        class RecvNode(LNode, DummylogMixIn):
-            def _work(self) -> None:
-                pass
-
-        class SendNode(TNode, DummylogMixIn):
-            def _work(self) -> None:
-                pass
-
         # initially, no registered node
         # self.assertListEqual([], Node.__nodes)
 
         # regsiter 2 node, should be unconnected
-        sender = SendNode(name='sender')
-        receiver = RecvNode(name='receiver')
-        self.assertEqual(0, len(sender.remotes))
+        sender1 = MyTNode(name='sender1', msg='hello1')
+        sender2 = MyTNode(name='sender2', msg='hello2')
+        receiver = MyLNode(name='receiver')
+        self.assertEqual(0, len(sender1.remotes))
 
         # connect node
-        sender.connect_to(receiver)
-        self.assertListEqual([receiver.name], sender.remotes)
+        sender1.connect_to(receiver)
+        sender2.connect_to(receiver)
+        self.assertListEqual([receiver.name], sender1.remotes)
+        self.assertListEqual([receiver.name], sender2.remotes)
 
         # connect invalid
         with self.assertRaises(ValueError):
-            sender.connect_to(sender)
+            sender1.connect_to(sender2)
 
-        # send message
-        sender._send(receiver.name, "tom")
-        time.sleep(1)
-        self.assertListEqual(["tom"], receiver._receive())
-        self.assertEqual(1, receiver._nreceived)
+        MyTNode.start_all()
+        MyTNode.join_all()
 
-        # send multiple
-        sender2 = SendNode(name='sender2')
-        sender2.connect_to(receiver)
-        sender._send(receiver.name, 'tom1')
-        sender2._send(receiver.name, 'tom2')
-        self.assertListEqual(['tom1', 'tom2'], receiver._receive())
-        self.assertEqual(2, receiver._nreceived)
+        self.assertListEqual(['hello1', 'hello2'], receiver.getmsgs().split(','))
+        # # send message
+        # sender._send(receiver.name, "tom")
+        # time.sleep(1)
+        # self.assertListEqual(["tom"], receiver._receive())
+        # self.assertEqual(1, receiver._nreceived)
+        #
+        # # send multiple
+        # sender2 = MyTNode(name='sender2')
+        # sender2.connect_to(receiver)
+        # sender._send(receiver.name, 'tom1')
+        # sender2._send(receiver.name, 'tom2')
+        # self.assertListEqual(['tom1', 'tom2'], receiver._receive())
+        # self.assertEqual(2, receiver._nreceived)
+        #
+        #
 
     def test_XNode(self):
         class SendNode(TNode, DummylogMixIn):

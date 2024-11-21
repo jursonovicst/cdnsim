@@ -6,7 +6,7 @@ from uniform import Uniform
 
 if __name__ == "__main__":
     # create the nodes
-    client = Client(arrival=Constant(rate=50), requests=Uniform(cbase=20))
+    client = Client(arrival=Constant(rate=50, ticks=5), requests=Uniform(cbase=20))
     cache = NonCache()
     origin = Origin()
 

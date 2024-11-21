@@ -65,7 +65,7 @@ class Node(Process, LogMixIn, metaclass=ABCMeta):
         # register node
         Node.__nodes.append(self)
 
-    def _run(self) -> None:
+    def _run(self, *args) -> None:
         """
         Private method, use the work method to implement custom tasks.
 
@@ -73,7 +73,7 @@ class Node(Process, LogMixIn, metaclass=ABCMeta):
         """
         self._log(f"{self.name} started")
         try:
-            self._work()
+            self._work(*args)
         except KeyboardInterrupt:
             pass
         except Exception as e:
@@ -85,7 +85,7 @@ class Node(Process, LogMixIn, metaclass=ABCMeta):
             #  self.__nodes.remove(self) # TODO: this is not working (node not on list exception). Figure out why...
 
     @abstractmethod
-    def _work(self) -> None:
+    def _work(self, *args) -> None:
         """
         Overwrite this to implement your custom node.
 
@@ -126,7 +126,16 @@ class LNode(Node, ABC):
 
         :return: the next messages from the message queues
         """
-        msgs = [q.get() for q in self.__queues]
+        # collect messages
+        msgs = []
+        for queue in self.__queues:
+            # get message from the ith queue, remove queue is termination (None) message received
+            if (msg := queue.get()) is None:
+                queue.close()
+                self.__queues.remove(queue)
+            else:
+                msgs.append(msg)
+
         self._nreceived += 1  # update received no.
         return msgs
 
@@ -165,7 +174,13 @@ class TNode(Node, ABC):
             raise KeyError(f"Already connected to {remote.name}")
         self.__rqueues[remote.name] = remote.registerqueue()
 
+    def _terminate(self) -> None:
+        for rqueue in self.__rqueues.values():
+            rqueue.put(None)
+
     def _send(self, to: str, msg: Any) -> None:
+        if msg is None:
+            raise ValueError("Cannot send None message, None is used to signal termination.")
         try:
             self.__rqueues[to].put(msg)
         except KeyError as e:
