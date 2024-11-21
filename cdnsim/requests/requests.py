@@ -1,14 +1,13 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABCMeta, ABC
 from typing import List, Hashable
 from typing import Self, Dict
 
 import pandas as pd
 
 
-class Requests(pd.Series):
+class BaseRequests(pd.Series, metaclass=ABCMeta):
 
     @classmethod
-    @abstractmethod
     def generate(cls, k: int) -> Self:
         """
         :param k: number of requests to generate
@@ -109,11 +108,23 @@ class Requests(pd.Series):
         d = super().__floordiv__(other).astype(int)
         assert isinstance(d, pd.Series), d
 
-        return [Requests(freqs=d.values,
-                         index={name: values for name, values in zip(self.index.names, self.index.levels)})] * other
+        return [BaseRequests(freqs=d.values,
+                             index={name: values for name, values in zip(self.index.names, self.index.levels)})] * other
 
     def __truediv__(self, other):
         raise NotImplementedError("TODO: implement this, // we wil lose requests, use some randomness")
+
+
+class Requests(BaseRequests, ABC):
+
+    def __init__(self,
+                 freqs: List[int] = [],
+                 index: Dict[str, List[Hashable]] = {'time': [], 'content': [], 'size': []}):
+        if 'time' not in index.keys() or 'content' not in index.keys() or 'size' not in index.keys():
+            raise SyntaxError(f"'time', 'content', 'size' must be part of the level names, got: {index.keys()}")
+        super().__init__(data=freqs,
+                         name='request',
+                         index=pd.MultiIndex.from_arrays(list(index.values()), names=index.keys()))
 
 # class IngressMixIn(LNode):
 #     def __init__(self, **kwargs):

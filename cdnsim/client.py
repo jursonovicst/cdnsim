@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from cdnsim.requests import Requests
+from cdnsim.requests import BaseRequests
 from nodes.log import LoggerMixIn
 from nodes.node import TNode
 from typing import Iterator, List, Tuple
@@ -14,5 +14,5 @@ class Client(LoggerMixIn, TNode, ABC):
         self._terminate()
 
     @abstractmethod
-    def _generate(self) -> Iterator[List[Tuple[str, Requests]]]:
+    def _generate(self) -> Iterator[List[Tuple[str, BaseRequests]]]:
         ...

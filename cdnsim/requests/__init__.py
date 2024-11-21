@@ -1,1 +1,1 @@
-from .requests import Requests
+from .requests import BaseRequests, Requests

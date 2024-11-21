@@ -3,10 +3,10 @@ from typing import Self
 import pandas as pd
 from scipy.stats import zipfian
 
-from cdnsim.requests.requests import Requests
+from cdnsim.requests.requests import BaseRequests
 
 
-class Zipf(Requests):
+class Zipf(BaseRequests):
     """
     Implements a Zipf distribution based request profile.
     """
@@ -21,4 +21,4 @@ class Zipf(Requests):
         self._a = a
 
     def generate(self, k: int) -> Self:
-        return Requests(pd.Series(zipfian.rvs(self._a, self._cbase, size=k)).value_counts())
+        return BaseRequests(pd.Series(zipfian.rvs(self._a, self._cbase, size=k)).value_counts())

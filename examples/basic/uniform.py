@@ -5,7 +5,7 @@ from scipy.stats import randint
 
 from cdnsim import Client
 from cdnsim.arrival import Arrival
-from cdnsim.requests import Requests
+from cdnsim.requests import BaseRequests
 
 
 class Uniform(Client):
@@ -14,8 +14,8 @@ class Uniform(Client):
         self._arrival = arrival
         super().__init__()
 
-    def _generate(self) -> Iterator[List[Tuple[str, Requests]]]:
+    def _generate(self) -> Iterator[List[Tuple[str, BaseRequests]]]:
         for k in self._arrival:
             r = np.unique(randint.rvs(1, self._cbase + 1, size=k), return_counts=True)
             yield [(remote, request) for remote, request in
-                   zip(self.remotes, Requests(freqs=list(r[1]), index={'content': list(r[0])}) // len(self.remotes))]
+                   zip(self.remotes, BaseRequests(freqs=list(r[1]), index={'content': list(r[0])}) // len(self.remotes))]
