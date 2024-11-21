@@ -87,7 +87,8 @@ class Node(Process, LogMixIn, metaclass=ABCMeta):
     @abstractmethod
     def _work(self, *args) -> None:
         """
-        Overwrite this to implement your custom node.
+        Overwrite this to implement your own node. Use Process' *args* parameter in the constructor to provide custom
+        variables.
 
         :return: None
         """
