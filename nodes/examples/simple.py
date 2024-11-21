@@ -15,57 +15,64 @@ from nodes.node import LNode, TNode, XNode
 #
 # we expect, that the simulation will log the numbers from 0 on, two times each (by receiver 1 and receiver2).
 
-LoggerMixIn.setlevel(LogLevel.INFO)
+LoggerMixIn.setlevel(LogLevel.DEBUG)
 
 
-# first, create the Sender class to implement the sender function, for that, we will need a **TNode** for message
-# outputs and a LogMixIn to provide logger functions for the TNode
+# Create the Sender class to implement the sender function, for that, we will need a **TNode** for messageoutputs and a
+# LogMixIn to provide logger functions for the TNode
 class Sender(LoggerMixIn, TNode):
     """
     Sends a sequence of numbers in every second
     """
 
     def _work(self) -> None:
-        i = 0
-        while True:
+        i = 10
+        while i > 0:
             time.sleep(1)
             for remote in self.remotes:
+                self._log(f"send {i} to {remote}", LogLevel.DEBUG)
                 self._send(remote, i)
-                i += 1
+                i -= 1
+
+        # send termination message
+        self._terminate()
 
 
-# second, implement the repeater function by using an XNode
+# Implement the repeater function by using an XNode
 class Repeater(LoggerMixIn, XNode):
     """
-    Replicates all incoming messages to all receivers
+    Copies all incoming messages to all receivers
     """
 
     def _work(self) -> None:
-        while True:
-            for msg in self._receive():
-                for remote in self.remotes:
+        while msgs := self._receive():
+            self._log(f"received {','.join(map(str, msgs))}", LogLevel.DEBUG)
+            for remote in self.remotes:
+                for msg in msgs:
+                    self._log(f"send {msg} to {remote}", LogLevel.DEBUG)
                     self._send(remote, msg)
 
 
-# third, implement the receiver by using an LNode
-class Receover(LoggerMixIn, LNode):
+# Implement the receiver by using an LNode
+class Receiver(LoggerMixIn, LNode):
     """
     Logs received messages
     """
 
     def _work(self) -> None:
-        while True:
-            for msg in self._receive():
-                self._log(msg)
+        while msgs := self._receive():
+            for msg in msgs:
+                self._log(f"received {'.'.join(map(str, msgs))}", LogLevel.DEBUG)
+                self._log(msg, LogLevel.INFO)
 
 
 if __name__ == "__main__":
     try:
-        # fourth, instantiate the required functions
+        # Instantiate the required functions
         sender = Sender(name="client")
         repeater = Repeater(name="repeater")
-        receiver1 = Receover(name="origin1")
-        receiver2 = Receover(name="origin2")
+        receiver1 = Receiver(name="receiver1")
+        receiver2 = Receiver(name="receiver2")
 
         # fifth, connect the nodes according to the communication plan
         sender.connect_to(repeater)

@@ -3,14 +3,14 @@ from multiprocessing import Process
 from multiprocessing import Queue as Queue
 from typing import List, Any, Self
 
-from nodes.log import LogMixIn
+from nodes.log import LogMixIn, LogLevel
 
 
 class Node(Process, LogMixIn, metaclass=ABCMeta):
     """
-    General Node definition for multiprocessing and simulation start/stop features.
+    Abstract Base Class for Node definition, multiprocessing and simulation start/stop features.
     """
-    # keep track of nodes
+    # keep track of nodes (=processes)
     __nodes: List[Self] = []
 
     @classmethod
@@ -21,7 +21,7 @@ class Node(Process, LogMixIn, metaclass=ABCMeta):
         :return: None
         """
         for node in cls.__nodes:
-            node._log(f"Start {node.name}", LogMixIn.INFO)
+            node._log(f"Start {node.name}", LogMixIn.DEBUG)
             node.start()
 
     @classmethod
@@ -35,7 +35,7 @@ class Node(Process, LogMixIn, metaclass=ABCMeta):
         while Node.__nodes:
             node = Node.__nodes.pop()
             if node.is_alive():
-                node._log(f"Terminate {node.name}", LogMixIn.INFO)
+                node._log(f"Terminate {node.name}", LogMixIn.DEBUG)
                 node.terminate()
                 node.join(timeout)
 
@@ -48,7 +48,7 @@ class Node(Process, LogMixIn, metaclass=ABCMeta):
         """
         for node in cls.__nodes:
             if node.is_alive():
-                node._log(f"Join {node.name}", LogMixIn.INFO)
+                node._log(f"Join {node.name}", LogMixIn.DEBUG)
                 node.join()
 
     @classmethod
@@ -71,7 +71,7 @@ class Node(Process, LogMixIn, metaclass=ABCMeta):
 
         :return: None
         """
-        self._log(f"{self.name} started")
+        self._log(f"{self.name} started", LogLevel.INFO)
         try:
             self._work(*args)
         except KeyboardInterrupt:
@@ -79,15 +79,15 @@ class Node(Process, LogMixIn, metaclass=ABCMeta):
         except Exception as e:
             self._exception(f"unexpected exception while running node: {e}")
         finally:
-            self._log(f"{self.name} exited")
+            self._log(f"{self.name} exited", LogLevel.INFO)
 
-            # deregister exited node
-            #  self.__nodes.remove(self) # TODO: this is not working (node not on list exception). Figure out why...
+        # deregister exited node
+        #  self.__nodes.remove(self) # TODO: this is not working (node not on list exception). Figure out why...
 
     @abstractmethod
     def _work(self, *args) -> None:
         """
-        Overwrite this to implement your own node. Use Process' *args* parameter in the constructor to provide custom
+        Overwrite this to implement your own node. You may use Process' *args* parameter in the constructor to provide custom
         variables.
 
         :return: None
@@ -113,7 +113,7 @@ class LNode(Node, ABC):
 
     def registerqueue(self) -> Queue:
         """
-        Used by T-nodes to connecting this node. Creates the input queue.
+        Used by T-nodes connecting to this node. Creates the input queue.
         """
         queue = Queue(self.__qsize)
         self.__queues.append(queue)

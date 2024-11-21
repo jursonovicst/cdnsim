@@ -11,7 +11,7 @@ class DummylogMixIn(LogMixIn):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def _log(self, buff: str, severity: str = LogMixIn.INFO) -> None:
+    def _log(self, buff: str, severity: LogLevel = LogMixIn.INFO) -> None:
         pass
 
     def _exception(self, buff: str) -> None:

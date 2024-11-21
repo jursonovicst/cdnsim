@@ -4,10 +4,12 @@ from enum import Enum
 
 class LogLevel(Enum):
     INFO = 1
+    DEBUG = 2
 
 
 class LogMixIn(metaclass=ABCMeta):
     INFO: LogLevel = LogLevel.INFO
+    DEBUG: LogLevel = LogLevel.DEBUG
 
     @classmethod
     @abstractmethod
@@ -15,7 +17,7 @@ class LogMixIn(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def _log(self, buff: str, severity: str = INFO) -> None:
+    def _log(self, buff: str, severity: LogLevel = INFO) -> None:
         ...
 
     @abstractmethod
