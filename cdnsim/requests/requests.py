@@ -1,4 +1,4 @@
-from abc import abstractmethod, ABCMeta, ABC
+from abc import ABCMeta, ABC
 from typing import List, Hashable
 from typing import Self, Dict
 
@@ -21,12 +21,12 @@ class BaseRequests(pd.Series, metaclass=ABCMeta):
         super().__init__(data=freqs, name='request',
                          index=pd.MultiIndex.from_arrays(list(index.values()), names=index.keys()))
 
-    @property
-    def nrequests(self) -> int:
-        """
-        Sum of individual requests
-        """
-        return 0 if self.empty else self.sum()
+    # @property
+    # def nrequests(self) -> int:
+    #     """
+    #     Sum of individual requests
+    #     """
+    #     return 0 if self.empty else self.sum()
 
     @property
     def pmf(self) -> pd.Series:

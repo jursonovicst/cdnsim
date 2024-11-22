@@ -1,4 +1,4 @@
-from typing import Self, Hashable, List
+from typing import Self
 from unittest import TestCase
 
 from cdnsim.requests import BaseRequests
@@ -11,9 +11,9 @@ class TestRequests(TestCase):
         r2 = BaseRequests(freqs=[100, 200, 300], index={'content': [1, 2, 3], 'dummy': [22, 33, 44]})
 
         # properties
-        self.assertEqual(600, r1.nrequests)
+        self.assertEqual(600, r1.sum())
         self.assertListEqual(['content'], r1.index.names)
-        self.assertEqual(600, r2.nrequests)
+        self.assertEqual(600, r2.sum())
         self.assertListEqual(['content', 'dummy'], r2.index.names)
         # self.assertEqual(14000, r.pmf, r.pmf)
 
