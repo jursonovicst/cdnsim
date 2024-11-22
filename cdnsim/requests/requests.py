@@ -1,11 +1,11 @@
-from abc import ABCMeta, ABC
+from abc import ABC
 from typing import List, Hashable
 from typing import Self, Dict
 
 import pandas as pd
 
 
-class BaseRequests(pd.Series, metaclass=ABCMeta):
+class BaseRequests(pd.Series, ABC):
 
     @classmethod
     def generate(cls, k: int) -> Self:
@@ -20,13 +20,6 @@ class BaseRequests(pd.Series, metaclass=ABCMeta):
             raise SyntaxError(f"'content' must be part of the level names, got: {index.keys()}")
         super().__init__(data=freqs, name='request',
                          index=pd.MultiIndex.from_arrays(list(index.values()), names=index.keys()))
-
-    # @property
-    # def nrequests(self) -> int:
-    #     """
-    #     Sum of individual requests
-    #     """
-    #     return 0 if self.empty else self.sum()
 
     @property
     def pmf(self) -> pd.Series:
@@ -113,18 +106,6 @@ class BaseRequests(pd.Series, metaclass=ABCMeta):
 
     def __truediv__(self, other):
         raise NotImplementedError("TODO: implement this, // we wil lose requests, use some randomness")
-
-
-class Requests(BaseRequests, ABC):
-
-    def __init__(self,
-                 freqs: List[int] = [],
-                 index: Dict[str, List[Hashable]] = {'time': [], 'content': [], 'size': []}):
-        if 'time' not in index.keys() or 'content' not in index.keys() or 'size' not in index.keys():
-            raise SyntaxError(f"'time', 'content', 'size' must be part of the level names, got: {index.keys()}")
-        super().__init__(data=freqs,
-                         name='request',
-                         index=pd.MultiIndex.from_arrays(list(index.values()), names=index.keys()))
 
 # class IngressMixIn(LNode):
 #     def __init__(self, **kwargs):
