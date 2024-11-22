@@ -9,6 +9,9 @@ from cdnsim.requests import BaseRequests
 
 
 class Uniform(Client):
+    """
+    Uniform client, *cbase* number of contents, each content is requested with the same probability.
+    """
     def __init__(self, cbase: int, arrival: Arrival):
         self._cbase = cbase
         self._arrival = arrival

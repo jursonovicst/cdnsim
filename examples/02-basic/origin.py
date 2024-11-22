@@ -6,6 +6,9 @@ from nodes.node import LNode
 
 
 class Origin(LoggerMixIn, LNode):
+    """
+    Simple origin implementation. Logs the number of requests received.
+    """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
