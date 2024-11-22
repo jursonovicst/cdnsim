@@ -1,11 +1,11 @@
 from nodes.log import LogMixIn, LoggerMixIn
 
-# Create the simplest CDN setup consisting of one client, one cache and a single origin.
 #
-# [client1] --> [cache1] --> [origin]
 #
-# the client requests uniform profiles according to a constant arrival processes, the caches are NonCaches, meaning,
-# they do not cache at all (for demonstration purposes), and the origin just logs the number of requests received.
+#
+#
+#
+#
 
 LoggerMixIn.setlevel(LogMixIn.INFO)
 
@@ -103,7 +103,6 @@ class PLFUCache(Cache):
             # blablabla...
             for remote, request in zip(self.remotes, request[misses] // len(self.remotes)):
                 self._send(remote, request)
-        self._terminate()
 
 
 # origin implementation

@@ -22,7 +22,6 @@ class MyTNode(TNode, DummylogMixIn):
     def _work(self, msg) -> None:
         for to in self.remotes:
             self._send(to, msg)
-        self._terminate()
 
 
 class MyLNode(LNode, DummylogMixIn):

@@ -135,10 +135,6 @@ class LNode(Node, ABC):
             else:
                 msgs.append(msg)
 
-        # propagate termination
-        if not msgs and isinstance(self, TNode):
-            self._terminate()
-
         return msgs
 
 
@@ -176,10 +172,10 @@ class TNode(Node, ABC):
             raise KeyError(f"Already connected to {remote.name}")
         self.__rqueues[remote.name] = remote.registerqueue()
 
-    def _terminate(self) -> None:
-        """
-        Sends the termination message (None) down the chain
-        """
+    def _run(self, *args) -> None:
+        super()._run(*args)
+
+        # _work() exited, send the termination message down the chain
         for rqueue in self.__rqueues.values():
             rqueue.put(None)
 
