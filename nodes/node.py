@@ -71,7 +71,7 @@ class Node(Process, LogMixIn, metaclass=ABCMeta):
 
         :return: None
         """
-        self._log(f"{self.name} started", LogLevel.INFO)
+        self._log(f"started", LogLevel.INFO)
         try:
             self._work(*args)
         except KeyboardInterrupt:
@@ -79,7 +79,7 @@ class Node(Process, LogMixIn, metaclass=ABCMeta):
         except Exception as e:
             self._exception(f"unexpected exception while running node: {e}")
         finally:
-            self._log(f"{self.name} exited", LogLevel.INFO)
+            self._log(f"exited", LogLevel.INFO)
 
         # deregister exited node
         #  self.__nodes.remove(self) # TODO: this is not working (node not on list exception). Figure out why...

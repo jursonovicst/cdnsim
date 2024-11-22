@@ -43,10 +43,10 @@ class Uniform(Client):
     Uniform client, *cbase* number of contents, each content is requested with the same probability.
     """
 
-    def __init__(self, cbase: int, arrival: Arrival):
+    def __init__(self, cbase: int, arrival: Arrival, **kwargs):
         self._cbase = cbase
         self._arrival = arrival
-        super().__init__()
+        super().__init__(**kwargs)
 
     def _generate(self) -> Iterator[List[Tuple[str, BaseRequests]]]:
         for k in self._arrival:

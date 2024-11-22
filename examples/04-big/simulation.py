@@ -1,10 +1,10 @@
 from nodes.log import LogMixIn, LoggerMixIn
 
-# Create a simple CDN setup consisting of two clients, two caches and a single origin.
+# Create a big CDN setup consisting of three tiers
 #
-# [client1] -┐┌-> [cache1] -┐
-#            ├┤             ├-> [cache3] --> [origin]
-# [client2] -┘└-> [cache2] -┘
+# first tier:  24 pops, 30 servers each pop
+# second tier: 24 pops, 4 servers each pop
+# third tier: 1 pop, 30 servers
 #
 # the clients are requesting different profiles of Zipf distribution according to different arrival processes, the
 # caches are NonCaches, meaning, they do not cache at all (just for this example), and the origin is a simple origin.
@@ -129,32 +129,41 @@ class Origin(LoggerMixIn, LNode):
 
 if __name__ == "__main__":
 
-    # create client
-    client1 = ZipfClient(cbase=20, n=50, p=0.5, a=1.6, arrival=Poisson(lam=50, ticks=10))
-    client2 = ZipfClient(cbase=100, n=200, p=0.3, a=1.1, arrival=Poisson(lam=80, ticks=10))
 
-    # create caches
-    cache1 = PLFUCache(size=10)
-    cache2 = PLFUCache(size=10)
-    cache3 = PLFUCache(size=20)
-
-    # create origin
     origin = Origin()
 
-    # establish connections
-    client1.connect_to(cache1)
-    client1.connect_to(cache2)
-    client2.connect_to(cache1)
-    client2.connect_to(cache2)
-    cache1.connect_to(cache3)
-    cache2.connect_to(cache3)
-    cache3.connect_to(origin)
+    l3caches=[]
+    for server in range(30):
+        c = PLFUCache(name=f"cache_l3_no{server}", size=100)
+        c.connect_to(origin)
+        l3caches.append(c)
+
+    pops=[]
+    for pop in range(24):
+        l2caches=[]
+        for server in range(4):
+            c = PLFUCache(name=f"cache_l2_pop{pop}_no{server}", size=20)
+            for l3 in l3caches:
+                c.connect_to(l3)
+            l2caches.append(c)
+
+        l1caches=[]
+        for server in range(24):
+            c = PLFUCache(name=f"cache_l1_pop{pop}_no{server}", size=5)
+            for l2 in l2caches:
+                c.connect_to(l2)
+            l1caches.append(c)
+
+        client = ZipfClient(name=f"client_pop{pop}", cbase=1000, n=200, p=0.3, a=1.1, arrival=Poisson(lam=300, ticks=3600))
+        for c in l1caches:
+            client.connect_to(c)
+        pops.append([*l2caches, l1caches, client])
 
     # run simulation
     try:
-        client1.start_all()
-        client1.join_all()
+        ZipfClient.start_all()
+        ZipfClient.join_all()
     except KeyboardInterrupt:
         pass
     finally:
-        client1.terminate_all()
+        ZipfClient.terminate_all()
