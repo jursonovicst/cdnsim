@@ -1,11 +1,13 @@
 from nodes.log import LogMixIn, LoggerMixIn
 
+# Create a simple CDN setup consisting of two clients, two caches and a single origin.
 #
+# [client1] -┐┌-> [cache1] -┐
+#            ├┤             ├-> [cache3] --> [origin]
+# [client2] -┘└-> [cache2] -┘
 #
-#
-#
-#
-#
+# the clients are requesting different profiles of Zipf distribution according to different arrival processes, the
+# caches are NonCaches, meaning, they do not cache at all (just for this example), and the origin is a simple origin.
 
 LoggerMixIn.setlevel(LogMixIn.INFO)
 
