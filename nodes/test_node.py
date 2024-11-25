@@ -21,7 +21,7 @@ class MyTNode(TNode, DummylogMixIn):
 
     def _work(self, msg) -> None:
         for to in self.remotes:
-            self._send(to, msg)
+            self._send([msg])
 
 
 class MyLNode(LNode, DummylogMixIn):
@@ -51,10 +51,10 @@ class TestNode(TestCase):
 
     def test_node(self):
         # simplest node implementation
-        node1 = MyNode()
-        self.assertTrue(node1.name.startswith("MyNode-"))
+        node1 = MyNode(name='Tom')
+        self.assertEqual('Tom', node1.name, node1.name)
         self.assertEqual(1, len(Node.list_all()))
-        self.assertTrue(Node.list_all()[0].name.startswith("MyNode-"))
+        self.assertEqual('Tom', Node.list_all()[0].name)
 
         # check work function
         Path('_out/test.txt').unlink(missing_ok=True)
@@ -138,12 +138,11 @@ class TestNode(TestCase):
         self.assertListEqual(['receiver1', 'receiver2'], middle.remotes)
 
         # send
-        sender1._send(middle.name, 'tom1')
-        sender2._send(middle.name, 'tom2')
+        sender1._send(['tom1'])
+        sender2._send(['tom2'])
         self.assertListEqual(['tom1', 'tom2'], middle._receive())
 
-        middle._send(receiver1.name, 'tom3')
-        middle._send(receiver2.name, 'tom4')
+        middle._send(['tom3', 'tom4'])
         self.assertListEqual(['tom3'], receiver1._receive())
         self.assertListEqual(['tom4'], receiver2._receive())
 
@@ -177,9 +176,9 @@ class TestNode(TestCase):
         self.assertListEqual(['receiver1'], middle.remotes)
 
         # send
-        sender1._send(middle.name, 'tom1')
-        sender2._send(middle.name, 'tom2')
+        sender1._send(['tom1'])
+        sender2._send(['tom2'])
         self.assertListEqual(['tom1', 'tom2'], middle._receive())
 
-        middle._send(receiver1.name, 'tom3')
+        middle._send(['tom3'])
         self.assertListEqual(['tom3'], receiver1._receive())

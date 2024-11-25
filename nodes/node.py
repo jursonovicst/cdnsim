@@ -1,17 +1,18 @@
 from abc import ABC, abstractmethod, ABCMeta
-from multiprocessing import Process
-from multiprocessing import Queue as Queue
-from typing import List, Any, Self
+from queue import Queue
+from threading import Thread
+from typing import List, Self
 
 from nodes.log import LogMixIn, LogLevel
 
 
-class Node(Process, LogMixIn, metaclass=ABCMeta):
+class Node(Thread, LogMixIn, metaclass=ABCMeta):
     """
     Abstract Base Class for Node definition, multiprocessing and simulation start/stop features.
     """
     # keep track of nodes (=processes)
     __nodes: List[Self] = []
+    queuesize = 5
 
     @classmethod
     def start_all(cls) -> None:
@@ -59,7 +60,7 @@ class Node(Process, LogMixIn, metaclass=ABCMeta):
         # Make class' run method private. Developers should use the _work method to implement custom tasks.
         kwargs.pop('target', None)
 
-        super().__init__(target=self._run, **kwargs)
+        super().__init__(target=self._run, name=kwargs.pop('name', f"{self.__class__.__name__}-{id(self)}"), **kwargs)
         self._stats = {}
 
         # register node
@@ -103,7 +104,7 @@ class LNode(Node, ABC):
     by the horizontal line.
     """
 
-    def __init__(self, qsize=100, **kwargs):
+    def __init__(self, qsize=Node.queuesize, **kwargs):
         """
         :param qsize: number of on the fly messages
         """
@@ -119,7 +120,7 @@ class LNode(Node, ABC):
         self.__queues.append(queue)
         return queue
 
-    def _receive(self) -> List[Any]:
+    def _receive(self) -> list:
         """
         Receives messages from all inputs. It will wait till one message is received from all input queues.
 
@@ -130,7 +131,6 @@ class LNode(Node, ABC):
         for queue in self.__queues:
             # get message from the ith queue, remove queue if termination (None) message received
             if (msg := queue.get()) is None:
-                queue.close()
                 self.__queues.remove(queue)
             else:
                 msgs.append(msg)
@@ -179,15 +179,15 @@ class TNode(Node, ABC):
         for rqueue in self.__rqueues.values():
             rqueue.put(None)
 
-    def _send(self, to: str, msg: Any) -> None:
-        if msg is None:
-            raise ValueError("Cannot send None message, None is reserved for termination.")
-        try:
-            self.__rqueues[to].put(msg)
-        except KeyError as e:
-            raise SyntaxError(f"Remote {e} not connected with us!")
-        except KeyboardInterrupt:
-            pass
+    def _send(self, msgs: list) -> None:
+        for remote, msg in zip(self.remotes, msgs):
+            if msg is None:
+                raise ValueError("Cannot send None message, None is reserved for termination.")
+
+            try:
+                self.__rqueues[remote].put(msg)
+            except KeyboardInterrupt:
+                pass
 
 
 class XNode(LNode, TNode, ABC):
