@@ -21,5 +21,5 @@ class LogMixIn(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def _exception(self, buff: str) -> None:
+    def _exception(self, buff: str = "Unexpected exception") -> None:
         ...

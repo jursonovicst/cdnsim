@@ -19,5 +19,5 @@ class LoggerMixIn(LogMixIn):
     def _log(self, buff: str, severity: LogLevel = LogMixIn.INFO) -> None:
         self.__logger.log(self.__sev2level[severity], buff)
 
-    def _exception(self, buff: str) -> None:
+    def _exception(self, buff: str = "Unexpected exception") -> None:
         self.__logger.exception(buff)
