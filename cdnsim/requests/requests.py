@@ -1,6 +1,6 @@
 from abc import ABC
-from typing import List, Hashable
-from typing import Self, Dict
+from typing import List
+from typing import Self
 
 import pandas as pd
 
@@ -14,12 +14,10 @@ class BaseRequests(pd.Series, ABC):
         """
         ...
 
-    def __init__(self, freqs: List[int] = [], index: Dict[str, List[Hashable]] = {'content': []}):
-
-        if 'content' not in index.keys():
-            raise SyntaxError(f"'content' must be part of the level names, got: {index.keys()}")
-        super().__init__(data=freqs, name='request',
-                         index=pd.MultiIndex.from_arrays(list(index.values()), names=index.keys()))
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'content' not in self.index.names:
+            raise SyntaxError(f"No content {self.index.names}")
 
     @property
     def pmf(self) -> pd.Series:
@@ -38,7 +36,7 @@ class BaseRequests(pd.Series, ABC):
 
     def __add__(self, other: Self) -> Self:
         """
-        Defines the addition of two Requests objects, which is the pd.Series addition of the two frequencies.
+        Hijacking addition to define the sum of Requests objects, which is the pd.Series addition of the frequencies.
 
         The sum of
 
@@ -58,13 +56,28 @@ class BaseRequests(pd.Series, ABC):
 
         is
 
+        content  size
+        1        10     100
+        2        20     200
+        3        30     301
+        4        40     2
+        5        50     3
+        Name: requests, dtype: int64
+
         """
-        return 0 if self.empty else self.add(other, fill_value=0).astype(int)
+
+        if not isinstance(other, self.__class__):
+            raise ValueError(f"Cannot add {self.__class__.__name__} and {type(other)}")
+
+        if other.index.names != self.index.names:
+            raise SyntaxError(f"Index mismatch: Cannot merge indexes {self.index.names} and {other.index.names}")
+
+        return self.add(other, fill_value=0).astype(int)
 
     def __floordiv__(self, other: int) -> List[Self]:
         """
-        Defines the division of two Requests objects, which means a split of requests into *v* Requests objects, but
-        keeping the sum of request numbers.
+        Hijacking floor division to define the division of Requests objects, which is the split of requests into *v*
+        Requests objects. Sum of frequencies may not equal!
 
         content  size
         1        10      10
@@ -93,16 +106,12 @@ class BaseRequests(pd.Series, ABC):
         Name: requests, dtype: int64
         """
         if not isinstance(other, int) or other < 1:
-            raise SyntaxError(f"Cannot divide {self.__class__.__name__} by {type(other)}")
+            raise ValueError(f"Cannot divide {self.__class__.__name__} by {type(other)}")
 
         if other == 1:
             return [self]
 
-        d = super().__floordiv__(other).astype(int)
-        assert isinstance(d, pd.Series), d
-
-        return [BaseRequests(freqs=d.values,
-                             index={name: values for name, values in zip(self.index.names, self.index.levels)})] * other
+        return [self.__class__(super().__floordiv__(other).astype(int))] * other
 
     def __truediv__(self, other):
         raise NotImplementedError("TODO: implement this, // we wil lose requests, use some randomness")
