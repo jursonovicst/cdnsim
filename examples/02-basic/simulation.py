@@ -1,3 +1,6 @@
+import pandas as pd
+
+from cdnsim.requests import BaseRequests
 from nodes.log import LogMixIn, LoggerMixIn
 
 # Create the simplest CDN setup consisting of one client, one cache and a single origin.
@@ -27,15 +30,49 @@ class Constant(Arrival):
         return int(self.__rate)
 
 
-# the uniform client implementation
-from typing import Iterator, List, Tuple
+# @pd.api.extensions.register_dataframe_accessor("requests")
+# class RequestsAccessor:
+#     def __init__(self, pandas_obj):
+#         self._validate(pandas_obj)
+#         self._obj = pandas_obj
+#
+#     @staticmethod
+#     def _validate(obj):
+#         # verify there is a column latitude and a column longitude
+#         if 'content' not in obj.index.names:
+#             raise AttributeError(f"Must have 'content' index, got {obj.index.names}")
+#         if 'freq' not in obj.columns:
+#             raise AttributeError(f"Must have 'freq', got {obj.columns}")
+#
+#     @property
+#     def pmf(self) -> pd.Series:
+#         return self._obj.freq.groupby('content').sum() / self._obj.freq.sum()
+#
+#     @property
+#     def cdf(self) -> pd.Series:
+#         return self._obj.pmf.cumsum()
+#
+#     def split(self, parts: int) ->  list[pd.DataFrame]:
+#         if not isinstance(parts, int) or parts < 1:
+#             raise ValueError(f"Cannot divide {self.__class__.__name__} into {parts} parts")
+#
+#         if parts == 1:
+#             return [self._obj]
+#         return [(self._obj // parts).astype(int)] * parts
+#
+#     @staticmethod
+#     def merge(dfs: list[pd.DataFrame]):
+#         if not isinstance(other, pd.DataFrame):
+#             raise ValueError(f"Cannot merge {self.__class__.__name__} into {other.__class__.__name__}")
+#
 
+
+# the uniform client implementation
 import numpy as np
 from scipy.stats import randint
 
 from cdnsim import Client
 from cdnsim.arrival import Arrival
-from cdnsim.requests import BaseRequests
 
 
 class Uniform(Client):
@@ -48,16 +85,15 @@ class Uniform(Client):
         self._arrival = arrival
         super().__init__(**kwargs)
 
-    def _generate(self) -> Iterator[List[Tuple[str, BaseRequests]]]:
+    def _work(self, *args) -> None:
         for k in self._arrival:
             r = np.unique(randint.rvs(1, self._cbase + 1, size=k), return_counts=True)
-            yield [(remote, request) for remote, request in
-                   zip(self.remotes,
-                       BaseRequests(freqs=list(r[1]), index={'content': list(r[0])}) // len(self.remotes))]
+            self._send(
+                BaseRequests(data={'freq': r[1]}, index=pd.MultiIndex.from_arrays([r[0]], names=['content'])).split(
+                    len(self.remotes)))
 
 
 # noncache implementation
-
 from cdnsim.cache import Cache
 
 
@@ -68,21 +104,14 @@ class NonCache(Cache):
 
     def _work(self) -> None:
         # receive messages from all remotes until termination (empty list) received
-        while msgs := self._receive():
-            assert isinstance(msgs, list) and len(msgs) > 0, msgs
-
-            # merge incoming requests
-            requests = cast(BaseRequests, sum(msgs))
-
-            # simply split the incoming requests among the remotes into equal parts
-            for remote, split_requests in zip(self.remotes, requests // len(self.remotes)):
-                self._send(remote, split_requests)
+        while (msgs := self._receive()) is not None:
+            requests = BaseRequests.merge(msgs)
+            # in-->out (no caching)
+            self._send(requests.split(len(self.remotes)))
 
 
 # origin implementation
-from typing import cast
 
-from cdnsim.requests import BaseRequests
 from nodes.log import LoggerMixIn
 from nodes.node import LNode
 
@@ -94,14 +123,12 @@ class Origin(LoggerMixIn, LNode):
 
     def _work(self) -> None:
         # receive messages from all remotes until termination (empty list) received
-        while msgs := self._receive():
-            assert isinstance(msgs, list) and len(msgs) > 0, msgs
-
+        while (msgs := self._receive()) is not None:
             # merge incoming requests
-            requests = cast(BaseRequests, sum(msgs))
+            requests = BaseRequests.merge(msgs)
 
             # log number of requests received
-            self._log(f"received {requests.sum()} requests")
+            self._log(f"received {requests.freq.sum()} requests")
 
 
 if __name__ == "__main__":
@@ -117,9 +144,9 @@ if __name__ == "__main__":
 
     # run simulation
     try:
-        client.start_all()
-        client.join_all()
+        Client.start_all()
+        Client.join_all()
     except KeyboardInterrupt:
         pass
     finally:
-        client.terminate()
+        Client.terminate_all()

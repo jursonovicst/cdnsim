@@ -120,7 +120,7 @@ class LNode(Node, ABC):
         self.__queues.append(queue)
         return queue
 
-    def _receive(self) -> list:
+    def _receive(self) -> list | None:
         """
         Receives messages from all inputs. It will wait till one message is received from all input queues.
 
@@ -135,7 +135,7 @@ class LNode(Node, ABC):
             else:
                 msgs.append(msg)
 
-        return msgs
+        return None if not msgs else msgs
 
 
 class TNode(Node, ABC):

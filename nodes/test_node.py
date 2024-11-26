@@ -35,7 +35,7 @@ class MyLNode(LNode, DummylogMixIn):
         super().__init__(**kwargs, args=(self._array,))
 
     def _work(self, array) -> None:
-        while msgs := self._receive():
+        while (msgs := self._receive()) is not None:
             array.value = ','.join([msg for msg in msgs]).encode('ASCII')
 
     def getmsgs(self) -> str:
@@ -93,6 +93,7 @@ class TestNode(TestCase):
         MyTNode.join_all()
 
         self.assertListEqual(['hello1', 'hello2'], receiver.getmsgs().split(','))
+
         # # send message
         # sender._send(receiver.name, "tom")
         # time.sleep(1)
