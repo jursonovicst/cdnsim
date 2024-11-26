@@ -7,12 +7,6 @@ from cdnsim.requests import BaseRequests, BaseSeries
 
 class TestRequests(TestCase):
     def test_init(self):
-        # init
-        r1 = BaseRequests(data={'freq': [100, 200, 300]},
-                          index=pd.MultiIndex.from_arrays([[1, 2, 3]], names=['content']))
-        r2 = BaseRequests(data={'freq': [10, 20, 30]},
-                          index=pd.MultiIndex.from_arrays([[1, 2, 3], [22, 33, 44]], names=['content', 'dummy']))
-
         # split
         r = BaseRequests(data={'freq': [10, 2, 6]}, index=pd.MultiIndex.from_arrays([[1, 2, 3]], names=['content']))
 
@@ -45,36 +39,37 @@ class TestRequests(TestCase):
         with self.assertRaises(AttributeError):
             r.requests.split(2)
 
-        # # addition
-        # s = r1 + BaseRequests(data={'freq': [1, 2, 3]}, index=pd.MultiIndex.from_arrays([[3, 4, 5]], names=['content']))
-        #
-        # self.assertListEqual([100, 200, 301, 2, 3], list(s.values))
-        # self.assertListEqual(['content'], s.index.names)
-        # self.assertListEqual([1, 2, 3, 4, 5], list(s.index.levels[0]))
-        #
-        # s = sum([r1, BaseRequests(data={'freq': [1, 2, 3]},
-        #                           index=pd.MultiIndex.from_arrays([[3, 4, 5]], names=['content']))])
-        #
-        # self.assertListEqual([100, 200, 301, 2, 3], list(s.values))
-        # self.assertListEqual(['content'], s.index.names)
-        # self.assertListEqual([1, 2, 3, 4, 5], list(s.index.levels[0]))
-        #
-        # s = r1 + BaseRequests(data={'freq': []}, index=pd.MultiIndex.from_arrays([[]], names=['content']))
-        #
-        # self.assertListEqual([100, 200, 300], list(s.values))
-        # self.assertListEqual(['content'], s.index.names)
-        # self.assertListEqual([1, 2, 3], list(s.index.levels[0]))
-        #
-        # s = BaseRequests(data={'freq': []}, index=pd.MultiIndex.from_arrays([[], []], names=['content', 'dummy'])) + r2
-        #
-        # self.assertListEqual([10, 20, 30], list(s.values))
-        # self.assertListEqual(['content', 'dummy'], s.index.names)
-        # self.assertListEqual([1, 2, 3], list(s.index.levels[0]))
-        # self.assertListEqual([22, 33, 44], list(s.index.levels[1]))
-        #
-        # with self.assertRaises(SyntaxError):
-        #     r1 + r2
-        #
+        # merge
+        r1 = BaseRequests(data={'freq': [100, 200, 300]},
+                          index=pd.MultiIndex.from_arrays([[1, 2, 3]], names=['content']))
+        r2 = BaseRequests(data={'freq': [1, 2, 3]},
+                          index=pd.MultiIndex.from_arrays([[3, 4, 5]], names=['content']))
+
+        with self.assertRaises(ValueError):
+            BaseRequests.merge([])
+
+        s = BaseRequests.merge([r1])
+        self.assertListEqual([100, 200, 300], list(s.values))
+        self.assertListEqual(['content'], s.index.names)
+        self.assertListEqual([1, 2, 3], list(s.index.levels[0]))
+
+        s = BaseRequests.merge([r1, r2])
+        self.assertListEqual([100, 200, 301, 2, 3], list(s.values))
+        self.assertListEqual(['content'], s.index.names)
+        self.assertListEqual([1, 2, 3, 4, 5], list(s.index.levels[0]))
+
+        s = BaseRequests.merge(
+            [r1, BaseRequests(data={'freq': []}, index=pd.MultiIndex.from_arrays([[]], names=['content']))])
+        self.assertListEqual([100, 200, 300], list(s.values))
+        self.assertListEqual(['content'], s.index.names)
+        self.assertListEqual([1, 2, 3], list(s.index.levels[0]))
+
+        s = BaseRequests.merge(
+            [BaseRequests(data={'freq': []}, index=pd.MultiIndex.from_arrays([[]], names=['content'])), r1])
+        self.assertListEqual([100, 200, 300], list(s.values))
+        self.assertListEqual(['content'], s.index.names)
+        self.assertListEqual([1, 2, 3], list(s.index.levels[0]))
+
         # # floor division
         # r = BaseRequests(data={'freq': [10, 2, 6]}, index=pd.MultiIndex.from_arrays([[1, 2, 3]], names=['content']))
         #

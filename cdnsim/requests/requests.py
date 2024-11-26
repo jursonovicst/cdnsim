@@ -1,5 +1,6 @@
+from typing import List, Self
+
 import pandas as pd
-from pandas import merge
 
 
 #
@@ -66,14 +67,14 @@ class BaseRequests(pd.DataFrame):
         return BaseSeries
 
     @staticmethod
-    def merge(dfs: list):
+    def merge(dfs: List[Self]) -> Self:
         if len(dfs) == 0:
             raise ValueError("Cannot merge an empty DataFrame")
 
         if len(dfs) == 1:
             return dfs[0]
 
-        return merge(dfs[1:])
+        return dfs[0].add(BaseRequests.merge(dfs[1:]), fill_value=0)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
