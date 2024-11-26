@@ -10,7 +10,7 @@ class TestRequests(TestCase):
         # split
         r = BaseRequests(data={'freq': [10, 2, 6]}, index=pd.MultiIndex.from_arrays([[1, 2, 3]], names=['content']))
 
-        d = r.split(1)
+        d = r.split_rr(1)
         self.assertIsInstance(d, list)
         self.assertTrue(all([isinstance(i, BaseRequests) for i in d]), [type(i) for i in d])
         self.assertEqual(1, len(d))
@@ -18,7 +18,7 @@ class TestRequests(TestCase):
         self.assertListEqual([10, 2, 6], list(d[0].values))
         self.assertListEqual([1, 2, 3], list(d[0].index.levels[0]))
 
-        d = r.split(3)
+        d = r.split_rr(3)
 
         self.assertIsInstance(d, list)
         self.assertTrue(all([isinstance(i, BaseRequests) for i in d]), [type(i) for i in d])
@@ -32,12 +32,12 @@ class TestRequests(TestCase):
         self.assertListEqual([1, 2, 3], list(d[2].index.levels[0]))
 
         with self.assertRaises(ValueError):
-            r.split(0)
+            r.split_rr(0)
 
         r = pd.DataFrame(data={'dummy': [1, 2, 3]})
 
         with self.assertRaises(AttributeError):
-            r.requests.split(2)
+            r.requests.split_rr(2)
 
         # merge
         r1 = BaseRequests(data={'freq': [100, 200, 300]},
@@ -46,25 +46,25 @@ class TestRequests(TestCase):
                           index=pd.MultiIndex.from_arrays([[3, 4, 5]], names=['content']))
 
         with self.assertRaises(ValueError):
-            BaseRequests.merge([])
+            BaseRequests.merge_requests([])
 
-        s = BaseRequests.merge([r1])
+        s = BaseRequests.merge_requests([r1])
         self.assertListEqual([100, 200, 300], list(s.values))
         self.assertListEqual(['content'], s.index.names)
         self.assertListEqual([1, 2, 3], list(s.index.levels[0]))
 
-        s = BaseRequests.merge([r1, r2])
+        s = BaseRequests.merge_requests([r1, r2])
         self.assertListEqual([100, 200, 301, 2, 3], list(s.values))
         self.assertListEqual(['content'], s.index.names)
         self.assertListEqual([1, 2, 3, 4, 5], list(s.index.levels[0]))
 
-        s = BaseRequests.merge(
+        s = BaseRequests.merge_requests(
             [r1, BaseRequests(data={'freq': []}, index=pd.MultiIndex.from_arrays([[]], names=['content']))])
         self.assertListEqual([100, 200, 300], list(s.values))
         self.assertListEqual(['content'], s.index.names)
         self.assertListEqual([1, 2, 3], list(s.index.levels[0]))
 
-        s = BaseRequests.merge(
+        s = BaseRequests.merge_requests(
             [BaseRequests(data={'freq': []}, index=pd.MultiIndex.from_arrays([[]], names=['content'])), r1])
         self.assertListEqual([100, 200, 300], list(s.values))
         self.assertListEqual(['content'], s.index.names)

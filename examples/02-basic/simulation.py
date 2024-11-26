@@ -89,7 +89,7 @@ class Uniform(Client):
         for k in self._arrival:
             r = np.unique(randint.rvs(1, self._cbase + 1, size=k), return_counts=True)
             self._send(
-                BaseRequests(data={'freq': r[1]}, index=pd.MultiIndex.from_arrays([r[0]], names=['content'])).split(
+                BaseRequests(data={'freq': r[1]}, index=pd.MultiIndex.from_arrays([r[0]], names=['content'])).split_rr(
                     len(self.remotes)))
 
 
@@ -105,9 +105,9 @@ class NonCache(Cache):
     def _work(self) -> None:
         # receive messages from all remotes until termination (empty list) received
         while (msgs := self._receive()) is not None:
-            requests = BaseRequests.merge(msgs)
+            requests = BaseRequests.merge_requests(msgs)
             # in-->out (no caching)
-            self._send(requests.split(len(self.remotes)))
+            self._send(requests.split_rr(len(self.remotes)))
 
 
 # origin implementation
@@ -125,7 +125,7 @@ class Origin(LoggerMixIn, LNode):
         # receive messages from all remotes until termination (empty list) received
         while (msgs := self._receive()) is not None:
             # merge incoming requests
-            requests = BaseRequests.merge(msgs)
+            requests = BaseRequests.merge_requests(msgs)
 
             # log number of requests received
             self._log(f"received {requests.freq.sum()} requests")

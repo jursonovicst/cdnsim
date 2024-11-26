@@ -66,15 +66,15 @@ class BaseRequests(pd.DataFrame):
         """
         return BaseSeries
 
-    @staticmethod
-    def merge(dfs: List[Self]) -> Self:
+    @classmethod
+    def merge_requests(cls, dfs: List[Self], index) -> Self:
         if len(dfs) == 0:
             raise ValueError("Cannot merge an empty DataFrame")
 
         if len(dfs) == 1:
             return dfs[0]
 
-        return dfs[0].add(BaseRequests.merge(dfs[1:]), fill_value=0)
+        return dfs[0].add(cls.merge_requests(dfs[1:]), fill_value=0)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -83,7 +83,10 @@ class BaseRequests(pd.DataFrame):
         if 'freq' not in self.columns:
             raise SyntaxError(f"Wrong column names {self.columns}")
 
-    def split(self, parts: int):
+    def split_rr(self, parts: int):
+        """
+        Split as round-robin
+        """
         if not isinstance(parts, int) or parts < 1:
             raise ValueError(f"Cannot divide {self.__class__.__name__} into {parts} parts")
 
