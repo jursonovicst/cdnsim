@@ -14,5 +14,5 @@ class DummylogMixIn(LogMixIn):
     def _log(self, buff: str, severity: LogLevel = LogMixIn.INFO) -> None:
         pass
 
-    def _exception(self, buff: str) -> None:
+    def _exception(self, buff: str = "Unexpected exception") -> None:
         logging.exception(buff)
