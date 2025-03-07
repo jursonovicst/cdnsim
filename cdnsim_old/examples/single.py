@@ -1,14 +1,14 @@
 from cdnsim_old.arrival import PoissonMixIn
 from cdnsim_old.content import ZipfMixIn, Obj
 from nodes.log import LoggerMixIn
-from nodes.node import LNode, TNode, XNode
+from nodes.node import LNode, TNode, INode
 
 
 class Client(PoissonMixIn, ZipfMixIn, LoggerMixIn, TNode):
 
     def _work(self) -> None:
         for size in self._arrival():
-            self._send(self.remotes[0], self._content(size))
+            self._send(self.downstreams[0], self._content(size))
 
 
 class Origin(LoggerMixIn, LNode):
@@ -19,10 +19,10 @@ class Origin(LoggerMixIn, LNode):
                 self._request(self.tick, obj)
 
 
-class Cache(LoggerMixIn, XNode):
+class Cache(LoggerMixIn, INode):
     def _work(self) -> None:
         for msg in self._receive():
-            self._send(self.remotes[0], msg)
+            self._send(self.downstreams[0], msg)
 
 
 if __name__ == "__main__":

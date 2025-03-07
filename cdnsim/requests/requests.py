@@ -67,7 +67,7 @@ class BaseRequests(pd.DataFrame):
         return BaseSeries
 
     @classmethod
-    def merge_requests(cls, dfs: List[Self], index) -> Self:
+    def merge_requests(cls, dfs: List[Self]) -> Self:
         if len(dfs) == 0:
             raise ValueError("Cannot merge an empty DataFrame")
 

@@ -15,6 +15,6 @@ class PLFUCache(Cache):
                 rank.loc[rank['volume'] < self._size, 'freq'] = 1
                 msg = ThroughputRequests(rank[['freq', 'size']])
                 assert isinstance(msg, ThroughputRequests), f"{type(msg)}, {msg}"
-                self._send(msg.split_rr(len(self.remotes)))
+                self._send(msg.split_rr(len(self.downstreams)))
         except Exception as e:
             self._exception()

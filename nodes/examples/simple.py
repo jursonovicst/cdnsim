@@ -1,7 +1,7 @@
 import time
 
-from nodes.log import LoggerMixIn, LogLevel
-from nodes.node import LNode, TNode, XNode
+from nodes.log import LoggerMixIn
+from nodes.node import LNode, TNode, INode
 
 # With the help of the nodes framework, we will implement a very basic example of nodes and their communication:
 #
@@ -13,44 +13,34 @@ from nodes.node import LNode, TNode, XNode
 # repeater: just forwards all messages from its inputs to its outputs
 # receiver: just receives (and prints) all messages
 #
-# we expect, that the simulation will log the numbers from 0 on, two times each (by receiver 1 and receiver2).
+# we expect, that the simulation will log the numbers from 10 to 0, two times each (by receiver 1 and receiver2).
 
-LoggerMixIn.setlevel(LogLevel.DEBUG)
+LoggerMixIn.setlevel(LoggerMixIn.DEBUG)
 
 
 # Create the Sender class to implement the sender function, for that, we will need a **TNode** for messageoutputs and a
 # LogMixIn to provide logger functions for the TNode
 class Sender(LoggerMixIn, TNode):
     """
-    Sends a sequence of numbers in every second
+    Sends a sequence of numbers
     """
 
     def _work(self) -> None:
-        i = 10
-        while i > 0:
-            time.sleep(1)
-            for remote in self.remotes:
-                self._log(f"send {i} to {remote}", LogLevel.DEBUG)
-                self._send(remote, i)
-                i -= 1
-
-        # send termination message
-        self._terminate()
+        i = 0
+        while i < 10000:
+            self._send([str(i)] * len(self.downstreams))
+            i += 1
 
 
 # Implement the repeater function by using an XNode
-class Repeater(LoggerMixIn, XNode):
+class Repeater(LoggerMixIn, INode):
     """
     Copies all incoming messages to all receivers
     """
 
     def _work(self) -> None:
         while msgs := self._receive():
-            self._log(f"received {','.join(map(str, msgs))}", LogLevel.DEBUG)
-            for remote in self.remotes:
-                for msg in msgs:
-                    self._log(f"send {msg} to {remote}", LogLevel.DEBUG)
-                    self._send(remote, msg)
+            self._send([','.join(msgs)] * len(self.downstreams))
 
 
 # Implement the receiver by using an LNode
@@ -61,9 +51,7 @@ class Receiver(LoggerMixIn, LNode):
 
     def _work(self) -> None:
         while msgs := self._receive():
-            for msg in msgs:
-                self._log(f"received {'.'.join(map(str, msgs))}", LogLevel.DEBUG)
-                self._log(msg, LogLevel.INFO)
+            self._log(f"received {'.'.join(map(str, msgs))}", LoggerMixIn.INFO)
 
 
 if __name__ == "__main__":
@@ -82,7 +70,10 @@ if __name__ == "__main__":
         # sixth, start the simulation, and wait for the results.
         sender.start_all()
         sender.join_all()
+
     except KeyboardInterrupt:
         pass
     finally:
-        Sender.terminate_all()
+        Sender.terminate_all(2)
+
+    time.sleep(1)

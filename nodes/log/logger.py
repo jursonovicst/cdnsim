@@ -6,7 +6,10 @@ from nodes.log import LogMixIn, LogLevel
 
 # TODO: figure _out, how to add inheritance here from Node (to access the .node property), without circular reference.
 class LoggerMixIn(LogMixIn):
-    __sev2level = {LogLevel.INFO: logging.INFO, LogLevel.DEBUG: logging.DEBUG}
+    __sev2level = {LogLevel.ERROR: logging.ERROR,
+                   LogLevel.WARNING: logging.WARNING,
+                   LogLevel.INFO: logging.INFO,
+                   LogLevel.DEBUG: logging.DEBUG}
 
     @classmethod
     def setlevel(cls, loglevel: LogLevel) -> None:

@@ -90,7 +90,7 @@ class Uniform(Client):
             r = np.unique(randint.rvs(1, self._cbase + 1, size=k), return_counts=True)
             self._send(
                 BaseRequests(data={'freq': r[1]}, index=pd.MultiIndex.from_arrays([r[0]], names=['content'])).split_rr(
-                    len(self.remotes)))
+                    len(self.downstreams)))
 
 
 # noncache implementation
@@ -107,7 +107,7 @@ class NonCache(Cache):
         while (msgs := self._receive()) is not None:
             requests = BaseRequests.merge_requests(msgs)
             # in-->out (no caching)
-            self._send(requests.split_rr(len(self.remotes)))
+            self._send(requests.split_rr(len(self.downstreams)))
 
 
 # origin implementation
@@ -149,4 +149,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
     finally:
-        Client.terminate_all()
+        Client.terminate_all(1)

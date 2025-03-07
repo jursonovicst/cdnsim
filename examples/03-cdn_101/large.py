@@ -94,4 +94,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
     finally:
-        ZipfClient.terminate_all()
+        ZipfClient.terminate_all(1)

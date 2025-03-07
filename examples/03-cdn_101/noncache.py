@@ -14,6 +14,6 @@ class NonCache(Cache):
             while (msgs := self._receive()) is not None:
                 requests = ThroughputRequests.merge_requests(msgs)
                 self._log(f"Received {requests.freq.sum()} requests", LogLevel.DEBUG)
-                self._send(requests.split_rr(len(self.remotes)))
+                self._send(requests.split_rr(len(self.downstreams)))
         except Exception as e:
             self._exception()

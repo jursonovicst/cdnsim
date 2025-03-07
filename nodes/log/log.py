@@ -3,11 +3,15 @@ from enum import Enum
 
 
 class LogLevel(Enum):
-    INFO = 1
-    DEBUG = 2
+    ERROR = 0
+    WARNING = 1
+    INFO = 2
+    DEBUG = 3
 
 
 class LogMixIn(metaclass=ABCMeta):
+    ERROR: LogLevel = LogLevel.ERROR
+    WARNING: LogLevel = LogLevel.WARNING
     INFO: LogLevel = LogLevel.INFO
     DEBUG: LogLevel = LogLevel.DEBUG
 

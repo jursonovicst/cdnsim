@@ -25,4 +25,4 @@ class ZipfClient(Client):
             assert len(ticks) == len(sizes) == len(r[0]), f"{ticks}, {sizes}, {r[0]}"
 
             index = pd.MultiIndex.from_arrays([ticks, r[0]], names=['tick', 'content'])
-            self._send(ThroughputRequests(data={'freq': r[1], 'size': sizes}, index=index).split_rr(len(self.remotes)))
+            self._send(ThroughputRequests(data={'freq': r[1], 'size': sizes}, index=index).split_rr(len(self.downstreams)))
